@@ -1,64 +1,44 @@
 import requests
-import json
+from unittest.mock import patch
+import pytest
 
-# Base URL of the sample API
-BASE_URL = "https://jsonplaceholder.typicode.com/"
+BASE_URL = "https://jsonplaceholder.typicode.com"
 
-# Helper function to print formatted response
-def print_response(response):
-    print(f"Status Code: {response.status_code}")
-    print(f"Response Body: {json.dumps(response.json(), indent=4)}")
-    print("-" * 50)
+# Test GET Request with Mocking
+@patch('requests.get')
+def test_get_post(mock_get):
+    # Setup the mock response
+    mock_response = mock_get.return_value
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"id": 1, "title": "Mocked Post", "body": "This is a mocked post", "userId": 1}
 
-# 1. GET Request: Fetch a single post
-def get_post(post_id):
-    url = f"{BASE_URL}posts/{post_id}"
-    response = requests.get(url)
-    print_response(response)
-    assert response.status_code == 200, f"Failed to fetch post {post_id}"
+    # Call the function
+    response = requests.get(f"{BASE_URL}/posts/1")
 
-# 2. POST Request: Create a new post
-def create_post(title, body, user_id):
-    url = f"{BASE_URL}posts"
-    data = {
-        "title": title,
-        "body": body,
-        "userId": user_id
+    # Assertions
+    assert response.status_code == 200
+    assert 'title' in response.json()
+    assert response.json()['title'] == "Mocked Post"
+
+# Test POST Request with Mocking
+@patch('requests.post')
+def test_create_post(mock_post):
+    # Setup the mock response
+    mock_response = mock_post.return_value
+    mock_response.status_code = 201
+    mock_response.json.return_value = {"id": 101, "title": "Mocked New Post", "body": "This is a new post", "userId": 1}
+
+    # Test data
+    new_post = {
+        "title": "New Post Title",
+        "body": "This is a new post body.",
+        "userId": 1
     }
-    response = requests.post(url, json=data)
-    print_response(response)
-    assert response.status_code == 201, "Failed to create post"
 
-# 3. PUT Request: Update a post
-def update_post(post_id, title, body, user_id):
-    url = f"{BASE_URL}posts/{post_id}"
-    data = {
-        "id": post_id,
-        "title": title,
-        "body": body,
-        "userId": user_id
-    }
-    response = requests.put(url, json=data)
-    print_response(response)
-    assert response.status_code == 200, "Failed to update post"
+    # Call the function
+    response = requests.post(f"{BASE_URL}/posts", json=new_post)
 
-# 4. DELETE Request: Delete a post
-def delete_post(post_id):
-    url = f"{BASE_URL}posts/{post_id}"
-    response = requests.delete(url)
-    print_response(response)
-    assert response.status_code == 200, f"Failed to delete post {post_id}"
-
-# 5. Running the tests
-if __name__ == "__main__":
-    # 1. Test GET request
-    get_post(1)
-    
-    # 2. Test POST request
-    create_post("Test Post Title", "This is the body of the post", 1)
-    
-    # 3. Test PUT request
-    update_post(1, "Updated Title", "This is the updated body", 1)
-    
-    # 4. Test DELETE request
-    delete_post(1)
+    # Assertions
+    assert response.status_code == 201
+    assert response.json()['title'] == "Mocked New Post"
+    assert 'userId' in response.json()
